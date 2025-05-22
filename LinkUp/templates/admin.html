@@ -1,0 +1,71 @@
+<body>
+  <h1>Admin Panel</h1>
+
+  <h2>Pending Devices</h2>
+  <div id="pendingList"></div>
+
+  <h2>Approved Devices</h2>
+  <div id="approvedList"></div>
+
+  <script>
+    async function fetchDevices() {
+      // Fetch pending and approved in parallel
+      const [pendingRes, approvedRes] = await Promise.all([
+        fetch("/api/pending"),
+        fetch("/api/devices"),
+      ]);
+
+      const pendingData = await pendingRes.json();
+      const approvedData = await approvedRes.json();
+
+      // Update Pending Devices
+      const pendingList = document.getElementById("pendingList");
+      pendingList.innerHTML = "";
+      for (const device of pendingData.requests) {
+        const item = document.createElement("div");
+        item.innerHTML = `
+          <strong>${device.device}</strong> (${device.device_ip})<br />
+          <em>${device.browser}</em><br />
+          <button onclick="approveDevice('${device.device}')">Approve</button>
+          <button onclick="denyDevice('${device.device}')">Deny</button>
+          <hr />
+        `;
+        pendingList.appendChild(item);
+      }
+
+      // Update Approved Devices
+      const approvedList = document.getElementById("approvedList");
+      approvedList.innerHTML = "";
+      for (const device of approvedData.devices || []) {
+        const item = document.createElement("div");
+        item.innerHTML = `
+          <strong>${device.device}</strong> (${device.device_ip})<br />
+          <em>${device.browser}</em>
+          <hr />
+        `;
+        approvedList.appendChild(item);
+      }
+    }
+
+    async function approveDevice(name) {
+      await fetch("/api/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: name }),
+      });
+      await fetchDevices();
+    }
+
+    async function denyDevice(name) {
+      await fetch("/api/deny", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: name }),
+      });
+      await fetchDevices();
+    }
+
+    setInterval(fetchDevices, 3000);
+    window.onload = fetchDevices;
+  </script>
+</body>

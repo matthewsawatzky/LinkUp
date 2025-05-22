@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phone Command</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="{{ url_for('index') }}" class="logo">
+        <span class="brand">LinkUp</span>
+        {% if page_title %}
+        <span class="subpage">{{ page_title }}</span>
+        {% endif %}
+      </a>
+      <nav>
+        <a href="{{ url_for('control_panel') }}">Commands</a>
+        <a href="{{ url_for('enroll') }}">Enroll</a>
+        <a href="{{ url_for('settings') }}">Settings</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Control Your Computer from Your Phone</h1>
+        <p>Self-hosted command center for local PC control via browser.</p>
+
+        {% if server_connected %}
+        <div class="server-info">
+          <h2>Connected to Server</h2>
+          <p><strong>Server Name:</strong> {{ server_info.name }}</p>
+          <p><strong>IP Address:</strong> {{ server_info.ip }}</p>
+          <p><strong>Status:</strong> {{ server_info.status }}</p>
+          <a href="{{ url_for('control_panel') }}" class="btn"
+            >Open Control Panel</a
+          >
+        </div>
+        {% else %}
+        <div class="no-connection">
+          <h2>No Server Connected</h2>
+          <p>Please enroll your device to start controlling your computer.</p>
+          <a href="{{ url_for('enroll') }}" class="btn">Go to Enroll Page</a>
+        </div>
+        {% endif %}
+      </section>
+    </main>
+
+    <footer>LinkUp — Self-hosted & Secure</footer>
+  </body>
+</html>

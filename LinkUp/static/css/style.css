@@ -1,0 +1,193 @@
+/* Reset & base */
+html, body {
+  margin: 0; 
+  padding: 0; 
+  height: 100%;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #1e1e2f; /* dark navy */
+  color: #e0e0e0; /* light gray text */
+  display: flex; 
+  flex-direction: column;
+}
+
+body > * {
+  flex-shrink: 0;
+}
+
+/* Main fills space */
+main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Header */
+header {
+  background: #27293d; /* darker navy/blue-gray */
+  color: #f0f0f0;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  flex-wrap: wrap;
+}
+
+header .logo {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+nav a {
+  color: #8ab4f8; /* soft blue accent */
+  text-decoration: none;
+  margin-left: 1.5rem;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+nav a:hover,
+nav a:focus {
+  color: #c9d1ff; /* lighter blue */
+  outline: none;
+  text-decoration: underline;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  background: #3a76f0; /* bright blue */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 8px rgba(58, 118, 240, 0.4);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.btn:hover,
+.btn:focus {
+  background: #1e4ed8; /* darker blue */
+  box-shadow: 0 6px 12px rgba(30, 78, 216, 0.6);
+  outline: none;
+  cursor: pointer;
+}
+
+/* Footer */
+footer {
+  background: #27293d;
+  color: #999bb3;
+  text-align: center;
+  padding: 1rem 2rem;
+  font-size: 0.9rem;
+  margin-top: auto;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  user-select: none;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+  nav {
+    margin-top: 0.75rem;
+  }
+  nav a {
+    margin-left: 0;
+    margin-right: 1rem;
+  }
+}
+
+.logo {
+  text-decoration: none; /* remove underline from entire link */
+  color: inherit;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.logo .brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.logo .subpage {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #8ab4f8;
+  opacity: 0.85;
+  text-transform: capitalize;
+  line-height: 1;
+}
+
+.logo {
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo:hover .brand {
+  text-decoration: underline;
+}
+
+.logo:hover .brand {
+  text-decoration: none; /* prevent underline on hover */
+}
+
+/* Optional: hover underline only on .subpage */
+.logo:hover .subpage {
+  text-decoration: underline;
+}
+
+input[type="text"] {
+  background: #2b2d42;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+input[type="text"]::placeholder {
+  color: #888;
+}
+
+label {
+  display: block;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #cfcfe0;
+}
+
+.hero {
+  max-width: 600px;
+  width: 100%;
+  background: #2b2d42;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.hero input,
+.hero button {
+  display: block;
+  margin: 0 auto;
+}

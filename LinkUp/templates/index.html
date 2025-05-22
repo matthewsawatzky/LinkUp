@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Device Verification</title>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <p>Verifying device, please wait...</p>
+
+    <script>
+      const DB_NAME = "DeviceAuthDB";
+      const STORE_NAME = "keys";
+      const PRIVATE_KEY_ID = "privateKey";
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, 1);
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME);
+            }
+          };
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result);
+        });
+      }
+
+      async function getPrivateKey() {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, "readonly");
+          const store = tx.objectStore(STORE_NAME);
+          const request = store.get(PRIVATE_KEY_ID);
+
+          request.onsuccess = async () => {
+            if (!request.result) {
+              reject("No private key found");
+              return;
+            }
+            try {
+              const privateKey = await crypto.subtle.importKey(
+                "pkcs8",
+                request.result,
+                { name: "ECDSA", namedCurve: "P-256" },
+                true,
+                ["sign"]
+              );
+              resolve(privateKey);
+            } catch (e) {
+              reject(e);
+            }
+          };
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async function signMessage(message) {
+        const privateKey = await getPrivateKey();
+        const encoder = new TextEncoder();
+        const data = encoder.encode(message);
+        const signature = await crypto.subtle.sign(
+          { name: "ECDSA", hash: { name: "SHA-256" } },
+          privateKey,
+          data
+        );
+        return btoa(String.fromCharCode(...new Uint8Array(signature)));
+      }
+
+      async function verifyAndRedirect() {
+        const deviceName = localStorage.getItem("deviceName");
+
+        if (!deviceName) {
+          console.warn("No device name in localStorage");
+          window.location.href = "enroll";
+          return;
+        }
+
+        try {
+          const command = "verifyed_ya_connect";
+          const signature = await signMessage(command);
+
+          const payload = {
+            device: deviceName,
+            command: command,
+            signature: signature,
+          };
+
+          const response = await fetch("/api/control", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) throw new Error("Fetch failed");
+
+          const result = await response.json();
+
+          if (result.status === "OK_continue") {
+            window.location.href = "home";
+          } else {
+            window.location.href = "enroll";
+          }
+        } catch (err) {
+          console.error("Verification failed:", err);
+          window.location.href = "enroll";
+        }
+      }
+
+      window.onload = verifyAndRedirect;
+    </script>
+  </body>
+</html>
