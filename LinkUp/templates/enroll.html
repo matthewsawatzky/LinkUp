@@ -1,214 +1,222 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Phone Command</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-  </head>
-  <body>
-    <header>
-      <a href="{{ url_for('index') }}" class="logo">
-        <span class="brand">LinkUp</span>
-        {% if page_title %}
-        <span class="subpage">{{ page_title }}</span>
-        {% endif %}
-      </a>
-      <nav>
-        <a href="{{ url_for('control_panel') }}">Commands</a>
-        <a href="{{ url_for('enroll') }}">Enroll</a>
-        <a href="{{ url_for('settings') }}">Settings</a>
-      </nav>
-    </header>
+{% extends "base.html" %} {% block title %}Enroll Device{% endblock %} {% block
+content %}
+<section class="text-center max-w-2xl mx-auto mt-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-4">Enroll Your Device</h1>
+  <p class="text-gray-600 mb-6">
+    Connect your phone to the control server by enrolling it below.
+  </p>
 
-    <main>
-      <section class="hero enroll-hero">
-        <h1>Request Access</h1>
+  {% if enrolled %}
+  <div class="bg-green-100 border border-green-300 rounded-lg p-6 text-left">
+    <h2 class="text-xl font-semibold text-green-700 mb-2">Device Enrolled</h2>
+    <p>Your device is now linked and ready to use.</p>
+    <a
+      href="{{ url_for('control_panel') }}"
+      class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+    >
+      Go to Control Panel
+    </a>
+  </div>
+  {% else %}
+  <form method="post" class="bg-white border rounded-lg shadow p-6 text-left">
+    <div class="mb-4">
+      <label for="device_name" class="block font-medium text-gray-700"
+        >Device Name</label
+      >
+      <input
+        type="text"
+        id="device_name"
+        name="device_name"
+        required
+        class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-300"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="device_key" class="block font-medium text-gray-700"
+        >Device Key</label
+      >
+      <input
+        type="text"
+        id="device_key"
+        name="device_key"
+        required
+        class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-300"
+      />
+    </div>
+    <button
+      type="submit"
+      class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+    >
+      Enroll Device
+    </button>
+  </form>
+  {% endif %}
+</section>
+{% block scripts %}
+<script>
+  const DB_NAME = "DeviceAuthDB";
+  const STORE_NAME = "keys";
+  const PRIVATE_KEY_ID = "privateKey";
+  const PUBLIC_KEY_ID = "publicKey";
 
-        <label for="deviceName">Device Name:</label>
-        <input
-          type="text"
-          id="deviceName"
-          placeholder="Enter your device name"
-        />
-
-        <button class="btn" onclick="generateAndRequest()">
-          Generate Key & Request Access
-        </button>
-      </section>
-    </main>
-
-    <footer>LinkUp — Self-hosted & Secure</footer>
-    <script>
-      const DB_NAME = "DeviceAuthDB";
-      const STORE_NAME = "keys";
-      const PRIVATE_KEY_ID = "privateKey";
-      const PUBLIC_KEY_ID = "publicKey";
-
-      // Open IndexedDB, create object store if needed
-      function openDB() {
-        return new Promise((resolve, reject) => {
-          const request = indexedDB.open(DB_NAME, 1);
-          request.onupgradeneeded = () => {
-            const db = request.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-              db.createObjectStore(STORE_NAME);
-            }
-          };
-          request.onerror = () => reject(request.error);
-          request.onsuccess = () => resolve(request.result);
-        });
-      }
-
-      // Save binary key data to IndexedDB by id
-      async function saveKey(id, keyData) {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE_NAME, "readwrite");
-          const store = tx.objectStore(STORE_NAME);
-          const req = store.put(keyData, id);
-          req.onsuccess = () => resolve(true);
-          req.onerror = () => reject(req.error);
-        });
-      }
-
-      // Load binary key data from IndexedDB by id
-      async function loadKey(id) {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE_NAME, "readonly");
-          const store = tx.objectStore(STORE_NAME);
-          const req = store.get(id);
-          req.onsuccess = () => resolve(req.result || null);
-          req.onerror = () => reject(req.error);
-        });
-      }
-
-      // Save private key (CryptoKey) in pkcs8 format to IndexedDB
-      async function savePrivateKey(key) {
-        const exported = await crypto.subtle.exportKey("pkcs8", key);
-        return saveKey(PRIVATE_KEY_ID, exported);
-      }
-
-      // Save public key (CryptoKey) in spki format to IndexedDB
-      async function savePublicKey(key) {
-        const exported = await crypto.subtle.exportKey("spki", key);
-        return saveKey(PUBLIC_KEY_ID, exported);
-      }
-
-      // Load and import private key from IndexedDB
-      async function loadPrivateKey() {
-        const exported = await loadKey(PRIVATE_KEY_ID);
-        if (!exported) return null;
-        return crypto.subtle.importKey(
-          "pkcs8",
-          exported,
-          { name: "ECDSA", namedCurve: "P-256" },
-          true,
-          ["sign"]
-        );
-      }
-
-      // Load and import public key from IndexedDB
-      async function loadPublicKey() {
-        const exported = await loadKey(PUBLIC_KEY_ID);
-        if (!exported) return null;
-        return crypto.subtle.importKey(
-          "spki",
-          exported,
-          { name: "ECDSA", namedCurve: "P-256" },
-          true,
-          ["verify"]
-        );
-      }
-
-      // Generate new key pair, save both keys, and send public key to server
-      async function generateAndRequest() {
-        const deviceName = document.getElementById("deviceName").value.trim();
-        if (!deviceName) {
-          alert("Enter a device name");
-          return;
+  // Open IndexedDB, create object store if needed
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
         }
+      };
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+  }
 
-        localStorage.setItem("deviceName", deviceName);
+  // Save binary key data to IndexedDB by id
+  async function saveKey(id, keyData) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.put(keyData, id);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+    });
+  }
 
-        // Generate ECDSA key pair
-        const keyPair = await crypto.subtle.generateKey(
-          { name: "ECDSA", namedCurve: "P-256" },
-          true,
-          ["sign", "verify"]
-        );
+  // Load binary key data from IndexedDB by id
+  async function loadKey(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
 
-        // Save keys to IndexedDB
-        await savePrivateKey(keyPair.privateKey);
-        await savePublicKey(keyPair.publicKey);
+  // Save private key (CryptoKey) in pkcs8 format to IndexedDB
+  async function savePrivateKey(key) {
+    const exported = await crypto.subtle.exportKey("pkcs8", key);
+    return saveKey(PRIVATE_KEY_ID, exported);
+  }
 
-        // Export public key as base64 for sending to server
-        const exportedPub = await crypto.subtle.exportKey(
-          "spki",
-          keyPair.publicKey
-        );
-        const pubKeyB64 = btoa(
-          String.fromCharCode(...new Uint8Array(exportedPub))
-        );
+  // Save public key (CryptoKey) in spki format to IndexedDB
+  async function savePublicKey(key) {
+    const exported = await crypto.subtle.exportKey("spki", key);
+    return saveKey(PUBLIC_KEY_ID, exported);
+  }
 
-        // 👇 Add this line:
-        console.log("Public key (base64):", pubKeyB64);
+  // Load and import private key from IndexedDB
+  async function loadPrivateKey() {
+    const exported = await loadKey(PRIVATE_KEY_ID);
+    if (!exported) return null;
+    return crypto.subtle.importKey(
+      "pkcs8",
+      exported,
+      { name: "ECDSA", namedCurve: "P-256" },
+      true,
+      ["sign"]
+    );
+  }
 
-        // Send enrollment request
-        const response = await fetch("/api/enroll", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ device: deviceName, publicKey: pubKeyB64 }),
-        });
+  // Load and import public key from IndexedDB
+  async function loadPublicKey() {
+    const exported = await loadKey(PUBLIC_KEY_ID);
+    if (!exported) return null;
+    return crypto.subtle.importKey(
+      "spki",
+      exported,
+      { name: "ECDSA", namedCurve: "P-256" },
+      true,
+      ["verify"]
+    );
+  }
 
-        const data = await response.json();
-        alert("Server response: " + JSON.stringify(data));
-      }
+  // Generate new key pair, save both keys, and send public key to server
+  async function generateAndRequest() {
+    const deviceName = document.getElementById("deviceName").value.trim();
+    if (!deviceName) {
+      alert("Enter a device name");
+      return;
+    }
 
-      // Example usage: Load keys on page load (optional)
-      window.onload = async () => {
-        const priv = await loadPrivateKey();
-        const pub = await loadPublicKey();
+    localStorage.setItem("deviceName", deviceName);
 
-        if (priv && pub) {
-          console.log("Keys loaded from IndexedDB.");
-          // Optionally set these to global variables or use as needed
+    // Generate ECDSA key pair
+    const keyPair = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      true,
+      ["sign", "verify"]
+    );
+
+    // Save keys to IndexedDB
+    await savePrivateKey(keyPair.privateKey);
+    await savePublicKey(keyPair.publicKey);
+
+    // Export public key as base64 for sending to server
+    const exportedPub = await crypto.subtle.exportKey(
+      "spki",
+      keyPair.publicKey
+    );
+    const pubKeyB64 = btoa(String.fromCharCode(...new Uint8Array(exportedPub)));
+
+    // 👇 Add this line:
+    console.log("Public key (base64):", pubKeyB64);
+
+    // Send enrollment request
+    const response = await fetch("/api/enroll", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device: deviceName, publicKey: pubKeyB64 }),
+    });
+
+    const data = await response.json();
+    alert("Server response: " + JSON.stringify(data));
+  }
+
+  // Example usage: Load keys on page load (optional)
+  window.onload = async () => {
+    const priv = await loadPrivateKey();
+    const pub = await loadPublicKey();
+
+    if (priv && pub) {
+      console.log("Keys loaded from IndexedDB.");
+      // Optionally set these to global variables or use as needed
+    } else {
+      console.log("No keys found, please enroll.");
+    }
+  };
+
+  async function logoutKeys() {
+    //-----------------------LOGOUT SCRIPT
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+
+      const privReq = store.delete(PRIVATE_KEY_ID);
+      const pubReq = store.delete(PUBLIC_KEY_ID);
+
+      let errors = [];
+
+      privReq.onerror = () => errors.push(privReq.error);
+      pubReq.onerror = () => errors.push(pubReq.error);
+
+      tx.oncomplete = () => {
+        if (errors.length) {
+          reject(errors);
         } else {
-          console.log("No keys found, please enroll.");
+          console.log("Keys deleted successfully.");
+          resolve(true);
         }
       };
 
-      async function logoutKeys() {
-        //-----------------------LOGOUT SCRIPT
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE_NAME, "readwrite");
-          const store = tx.objectStore(STORE_NAME);
-
-          const privReq = store.delete(PRIVATE_KEY_ID);
-          const pubReq = store.delete(PUBLIC_KEY_ID);
-
-          let errors = [];
-
-          privReq.onerror = () => errors.push(privReq.error);
-          pubReq.onerror = () => errors.push(pubReq.error);
-
-          tx.oncomplete = () => {
-            if (errors.length) {
-              reject(errors);
-            } else {
-              console.log("Keys deleted successfully.");
-              resolve(true);
-            }
-          };
-
-          tx.onerror = () => reject(tx.error);
-        });
-      }
-    </script>
-  </body>
-</html>
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+</script>
+{% endblock %} {% endblock %}
