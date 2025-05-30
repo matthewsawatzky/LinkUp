@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}LinkUp{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block head %}{% endblock %}
+  </head>
+  <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-md p-4 flex justify-between items-center">
+      <a
+        href="{{ url_for('index') }}"
+        class="flex items-center space-x-2 text-lg font-bold text-blue-600"
+      >
+        <span>LinkUp</span>
+        {% if page_title %}
+        <span class="text-sm text-gray-500 font-normal"
+          >/ {{ page_title }}</span
+        >
+        {% endif %}
+      </a>
+      <nav class="space-x-4">
+        <a
+          href="{{ url_for('control_panel') }}"
+          class="text-gray-700 hover:text-blue-600"
+          >Commands</a
+        >
+        <a
+          href="{{ url_for('enroll') }}"
+          class="text-gray-700 hover:text-blue-600"
+          >Enroll</a
+        >
+        <a
+          href="{{ url_for('settings') }}"
+          class="text-gray-700 hover:text-blue-600"
+          >Settings</a
+        >
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">{% block content %}{% endblock %}</main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-200 text-center text-sm text-gray-600 py-4">
+      LinkUp — Self-hosted & Secure
+    </footer>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
